@@ -1,1 +1,7 @@
-
+address private User;
+ 
+//get user address funaction
+    constructor() {
+        User = msg.sender; // 'msg.sender' is sender of current call, contract deployer for a constructor
+        //Here we should write the code that will store address on IPFS
+    }
