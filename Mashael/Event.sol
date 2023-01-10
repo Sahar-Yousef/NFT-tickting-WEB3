@@ -1,29 +1,66 @@
-pragma solidity ^0.4.24;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.4.22 <0.9.0;
 
-contract Event{
+contract Event {
+    address public Organizer;
 
-    struct EventData{
-        // string name of the event
-        string name;
-        // face value price of tickets (in wei)
-        uint price;
-        // total number of tickets offered
-        uint totalTickets;
-        // number of tickets remaining
-        uint remainingTickets;
-        // owner address of the event
-        address owner;
+    constructor() {
+        Organizer = msg.sender;
     }
 
-    // All events
-    EventData[] public events;
-    
-    // Called each time an event is created 
-    event EventCreated(uint indexed eventId, address indexed creator);
+   struct Event {
+    uint id;
+    address owner;
+    string name; // byte
+    uint date; // timestap 
+    uint ticketPrice;
+    uint ticketCount;
+    uint ticketRemaining;
+    uint Max;
+  }
+  mapping(uint => Event) public events;
+  mapping(address => mapping(uint => uint)) public tickets;
+  uint public eventId = 100;
+                             
+  event EventLog ( address Organizer, uint id);
 
-    function createEvent(string name, uint price, uint totalTickets)  returns (uint) {
-        uint id = events.push(EventData(name, price, totalTickets, totalTickets, msg.sender)) - 1;
-        emit EventCreated(id, msg.sender);
-        return id;
+  // add max here 
+                            //memory
+  function createEvent(string calldata eventName, uint eventDate, uint price, uint eventCapacity, uint Max) external  {
+    require(eventCapacity > 0, 'Minimum capacity (ticket count) should be 1.'); // using interface
+    require( msg.sender == Organizer ); // to check organizer address
+    events[eventId] = Event(eventId, msg.sender, eventName, eventDate, price, eventCapacity, eventCapacity, Max);
+    emit EventLog ( msg.sender, eventId);
+    eventId++;
+          
+  }
+
+                            // num of tick
+  function buyTicket(uint id, uint amount) eventExists(id)  payable external {
+    require(msg.value >= (events[id].ticketPrice * amount), 'Not enough ETH is sent to pay the tickets.');
+    require(amount <= 2, 'This is Maximum limit'); // for this address check
+    require(tickets[msg.sender][id] <= amount, 'Number of ticket is max');//
+    require(events[id].ticketRemaining >= amount, 'Not enough tickets.');
+
+    events[id].ticketRemaining -= amount;
+    tickets[msg.sender][id] += amount; //++
+   
+    // Creat it as NFT Tick  
+    // OpenZipplen 
+  }
+
+
+  function getAllEvents() external view returns (Event[] memory){
+    Event[] memory eventArray = new Event[](eventId);
+    for (uint i = 0; i < eventId; i++) {
+        eventArray[i] = events[i];
     }
+    return eventArray;
+  }
+
+  modifier eventExists(uint id) {
+    require(events[id].date != 0, 'Event does not exist.');
+    _;
+  }
+
 }
